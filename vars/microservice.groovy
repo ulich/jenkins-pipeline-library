@@ -19,29 +19,43 @@ def call(options) {
             }
 
             if (env.BRANCH_NAME == "master") {
-                dir('infrastructure') {
-                    stage('Terraform plan') {
-                        planFile = "planfile-$env.BUILD_TAG"
+                deploy(appName, "staging")
 
-                        sh "terraform init"
-                        hasChanges = terraformPlan(planFile, appName)
-                    }
-
-                    stage('Terraform apply') {
-                        if (hasChanges) {
-                            input message: 'Do you wish to apply the plan?'
-                            sh "terraform apply ${planFile}"
-                        }
-                    }
+                stage("Approve") {
+                    input message: 'Deploy to production?'
                 }
 
-                stage('Deploy') {
-                    eb_deploy(appName)
-                }
+                deploy(appName, "prod")
             }
         }
     }
 
+}
+
+def deploy(appName, environmentName) {
+    def planFile = "planfile-${environmentName}-$env.BUILD_TAG"
+    def terraformWorkspace = environmentName == "staging" ? "default" : environmentName
+
+    dir('infrastructure') {
+        stage("Terraform plan ${environmentName}") {
+            sh """
+                terraform init
+                terraform workspace select ${terraformWorkspace}
+            """
+            hasChanges = terraformPlan(planFile, appName)
+        }
+
+        stage("Terraform apply ${environmentName}") {
+            if (hasChanges) {
+                input message: 'Do you wish to apply the plan?'
+                sh "terraform apply ${planFile}"
+            }
+        }
+    }
+
+    stage("Deploy ${environmentName}") {
+        eb_deploy("${appName}-${environmentName}")
+    }
 }
 
 def terraformPlan(planFile, app) {
