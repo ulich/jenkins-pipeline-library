@@ -21,6 +21,22 @@ def call(options) {
             }
 
             if (env.BRANCH_NAME == "master") {
+                dir('infrastructure') {
+                    stage('Terraform plan') {
+                        planFile = "planfile-$env.BUILD_TAG"
+
+                        sh "terraform init"
+                        hasChanges = terraformPlan(planFile, appName)
+                    }
+
+                    stage('Terraform apply') {
+                        if (hasChanges) {
+                            input message: 'Do you wish to apply the plan?'
+                            sh "terraform apply ${planFile}"
+                        }
+                    }
+                }
+
                 stage('Deploy') {
                     eb_deploy(appName)
                 }
@@ -28,6 +44,14 @@ def call(options) {
         }
     }
 
+}
+
+def terraformPlan(planFile, app) {
+    exit_code = sh (script: "terraform plan -var 'app_name=${app}' -detailed-exitcode -out ${planFile}", returnStatus: true)
+    if (exit_code == 1) {
+        error('Plan failed. Please review')
+    }
+    return exit_code == 2
 }
 
 def eb_deploy(app) {
