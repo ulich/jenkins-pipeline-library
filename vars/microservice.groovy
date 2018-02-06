@@ -54,7 +54,7 @@ def deploy(appName, environmentName) {
     }
 
     stage("Deploy ${environmentName}") {
-        eb_deploy("${appName}-${environmentName}")
+        eb_deploy(appName, environmentName)
     }
 }
 
@@ -66,7 +66,7 @@ def terraformPlan(planFile, app) {
     return exit_code == 2
 }
 
-def eb_deploy(app) {
+def eb_deploy(app, environment) {
     sh """
         mkdir deploy || true
         cp -r .ebextensions deploy/ || true
@@ -74,7 +74,7 @@ def eb_deploy(app) {
     """
     dir('deploy') {
         generateEbConfigFile(app)
-        sh "eb deploy ${app}"
+        sh "eb deploy ${app}-${environment}"
     }
 }
 
