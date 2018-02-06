@@ -53,9 +53,15 @@ def terraformPlan(planFile, app) {
 }
 
 def eb_deploy(app) {
-    generateEbConfigFile(app)
-    
-    sh "eb deploy ${app}"
+    sh """
+        mkdir deploy || true
+        cp build/libs/*.jar deploy/
+        cp -r .ebextensions deploy/
+    """
+    dir('deploy') {
+        generateEbConfigFile(app)
+        sh "eb deploy ${app}"
+    }
 }
 
 def generateEbConfigFile(app){
