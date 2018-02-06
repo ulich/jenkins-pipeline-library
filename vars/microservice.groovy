@@ -1,5 +1,3 @@
-def region = "us-east-1"
-
 def call(options) {
     def appName = options.name
 
@@ -64,7 +62,7 @@ def generateEbConfigFile(app){
     writeFile file: ".elasticbeanstalk/config.yml", text: """
 global:
   application_name: ${app}
-  default_region: ${region}
+  default_region: us-east-1
   profile: null
   sc: null
 """
