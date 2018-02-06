@@ -55,7 +55,7 @@ def terraformPlan(planFile, app) {
 def eb_deploy(app) {
     generateEbConfigFile(app)
     
-    sh "docker run --rm -v `pwd`:/deploy --workdir /deploy coxauto/aws-ebcli eb deploy ${app}"
+    sh "eb deploy ${app}"
 }
 
 def generateEbConfigFile(app){
