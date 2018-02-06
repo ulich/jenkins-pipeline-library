@@ -32,20 +32,20 @@ def call(options) {
 
 }
 
-def deploy(appName, environmentName) {
-    def planFile = "planfile-${environmentName}-$env.BUILD_TAG"
-    def terraformWorkspace = environmentName == "staging" ? "default" : environmentName
+def deploy(appName, environment) {
+    def planFile = "planfile-${environment}-$env.BUILD_TAG"
+    def terraformWorkspace = environment == "staging" ? "default" : environment
 
     dir('infrastructure') {
-        stage("Terraform plan ${environmentName}") {
+        stage("Terraform plan ${environment}") {
             sh """
                 terraform init
-                terraform workspace select ${terraformWorkspace}
+                terraform workspace select ${terraformWorkspace} || terraform workspace new ${terraformWorkspace}
             """
             hasChanges = terraformPlan(planFile, appName)
         }
 
-        stage("Terraform apply ${environmentName}") {
+        stage("Terraform apply ${environment}") {
             if (hasChanges) {
                 input message: 'Do you wish to apply the plan?'
                 sh "terraform apply ${planFile}"
@@ -53,8 +53,8 @@ def deploy(appName, environmentName) {
         }
     }
 
-    stage("Deploy ${environmentName}") {
-        eb_deploy(appName, environmentName)
+    stage("Deploy ${environment}") {
+        eb_deploy(appName, environment)
     }
 }
 
