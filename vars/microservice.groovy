@@ -38,6 +38,7 @@ def deploy(appName, environment) {
 
     dir('infrastructure') {
         stage("Terraform plan ${environment}") {
+            generateTerraformConfig(appName)
             sh """
                 terraform init
                 terraform workspace select ${terraformWorkspace} || terraform workspace new ${terraformWorkspace}
@@ -56,6 +57,26 @@ def deploy(appName, environment) {
     stage("Deploy ${environment}") {
         eb_deploy(appName, environment)
     }
+}
+
+def generateTerraformConfig(app) {
+    writeFile file: 'config.tf', text: """
+variable "app_name" {
+}
+
+provider "aws" {
+    region = "us-east-1"
+}
+
+terraform {
+  backend "s3" {
+    bucket = "dip-infrastructure"
+    key = "terraform-states/${app}.tfstate"
+    encrypt = false
+    region = "eu-central-1"
+  }
+}
+"""
 }
 
 def terraformPlan(planFile, app) {
