@@ -74,7 +74,12 @@ def eb_deploy(app, environment) {
     """
     dir('deploy') {
         generateEbConfigFile(app)
-        sh "eb deploy ${app}-${environment}"
+
+        if (environment == "staging") {
+            sh "eb deploy ${app}-${environment}"
+        } else {
+            sh """eb deploy ${app}-${environment} --version \$(eb status ${app}-staging | grep "Deployed Version:" | sed "s/.*Deployed Version://")"""
+        }
     }
 }
 
