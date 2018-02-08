@@ -70,8 +70,8 @@ provider "aws" {
 
 terraform {
   backend "s3" {
-    bucket = "dip-infrastructure"
-    key = "terraform-states/${app}.tfstate"
+    bucket = "terraform-statefiles"
+    key = "microservices/${app}.tfstate"
     encrypt = false
     region = "eu-central-1"
   }
